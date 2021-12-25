@@ -1,4 +1,3 @@
-import json
 import os
 from contextlib import suppress
 from itertools import islice
@@ -6,6 +5,7 @@ from random import choice, randrange, sample
 from urllib.parse import urlunsplit
 
 import trio
+import ujson
 from trio_websocket import open_websocket_url
 
 from utils import parse_bus_args, relaunch_on_disconnect, set_logging
@@ -16,7 +16,7 @@ async def load_routes(routedir, num_routes=0):
     for name in sample(routes, num_routes):
         if name.endswith(".json"):
             with open(os.path.join(routedir, name)) as file:
-                yield json.load(file)
+                yield ujson.load(file)
                 await trio.sleep(0)
 
 
@@ -24,7 +24,7 @@ async def load_routes(routedir, num_routes=0):
 async def send_updates(server_url, channel):
     async with open_websocket_url(server_url) as ws:
         async for bus_info in channel:
-            await ws.send_message(json.dumps(bus_info, ensure_ascii=False))
+            await ws.send_message(ujson.dumps(bus_info, ensure_ascii=False))
 
 
 async def transpond(path, start, delay):

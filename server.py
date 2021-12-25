@@ -1,10 +1,10 @@
-import json
 from contextlib import suppress
 from dataclasses import asdict
 from functools import partial
 from json.decoder import JSONDecodeError
 
 import trio
+import ujson
 from trio_websocket import ConnectionClosed, serve_websocket
 
 from interface import Bus, WindowBounds
@@ -19,7 +19,7 @@ async def listen_to_buses(request):
     while True:
         try:
             message = await ws.get_message()
-            bus_info = json.loads(message)
+            bus_info = ujson.loads(message)
             validate(bus_info, Bus)
             bus = Bus(**bus_info)
             # `bus` is hashable with hash derived from `busId`
@@ -28,10 +28,10 @@ async def listen_to_buses(request):
 
         except JSONDecodeError:
             message = {"msgType": "Errors", "errors": "Requires valid JSON"}
-            await ws.send_message(json.dumps(message))
+            await ws.send_message(ujson.dumps(message))
         except MessageValidationError as err:
             message = {"msgType": "Errors", "errors": err.args}
-            await ws.send_message(json.dumps(message))
+            await ws.send_message(ujson.dumps(message))
         except ConnectionClosed:
             break
 
@@ -41,7 +41,7 @@ async def send_buses_info(socket, bounds):
         buses = [
             asdict(bus) for bus in buses_online if bounds.contain(bus.lat, bus.lng)
         ]
-        reply = json.dumps({"msgType": "Buses", "buses": buses}, ensure_ascii=False)
+        reply = ujson.dumps({"msgType": "Buses", "buses": buses}, ensure_ascii=False)
         try:
             await socket.send_message(reply)
         except ConnectionClosed:
@@ -54,16 +54,16 @@ async def listen_to_browser(socket, bounds):
     while True:
         try:
             message = await socket.get_message()
-            current_bounds = json.loads(message)
+            current_bounds = ujson.loads(message)
             validate(current_bounds, WindowBounds)
             bounds.update(**current_bounds["data"])
 
         except JSONDecodeError:
             message = {"msgType": "Errors", "errors": "Requires valid JSON"}
-            await socket.send_message(json.dumps(message))
+            await socket.send_message(ujson.dumps(message))
         except MessageValidationError as err:
             message = {"msgType": "Errors", "errors": err.args}
-            await socket.send_message(json.dumps(message))
+            await socket.send_message(ujson.dumps(message))
         except ConnectionClosed:
             break
 

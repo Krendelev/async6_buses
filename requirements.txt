@@ -1,2 +1,3 @@
 ConfigArgParse==1.5.*
 trio-websocket==0.9.*
+ujson==5.1.*
