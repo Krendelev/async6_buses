@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Bus:
     busId: str
     lat: float = field(compare=False)
@@ -9,7 +9,7 @@ class Bus:
     route: str = field(compare=False)
 
 
-@dataclass
+@dataclass(slots=True)
 class WindowBounds:
     south_lat: float = 0.0
     north_lat: float = 0.0
